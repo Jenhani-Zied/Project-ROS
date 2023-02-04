@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<launch>
+  <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_pub" ns="mobile_robot">
+  <node pkg="tf" type="static_transform_publisher" name="kinect_tf_broadcaster" args="0 0 0 0 3.1459 1.57 /kinect_link /ultrasonic_1_link 4"/>
+    <remap from="/mobile_robot/joint_states" to="/joint_states"/>
+    <param name="publish_frequency" type="double" value="30.0"/>
+  </node>
+</launch>

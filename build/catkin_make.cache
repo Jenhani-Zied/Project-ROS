@@ -1,0 +1,2 @@
+mobile_robot:mobile_robot_base:mobile_robot_description:mobile_robot_simulation
+-DCATKIN_DEVEL_PREFIX=/home/s111p03/catkin_ws/devel -DCMAKE_INSTALL_PREFIX=/home/s111p03/catkin_ws/install -G Unix Makefiles

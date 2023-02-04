@@ -1,0 +1,206 @@
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro"  name="mobile_robot">
+
+ <xacro:macro name="wheel" params="name x y">
+  <link name="${name}">
+    <visual>
+      <origin xyz="0 0 0" rpy="${pi/2} 0 0"/>
+      <geometry>
+        <cylinder length="0.04" radius="0.1"/>
+      </geometry>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="${pi/2} 0 0"/>
+      <geometry>
+         <cylinder length="0.04" radius="0.1"/>
+      </geometry>
+    </collision>
+	<xacro:default_inertial mass="0.6"/>
+  </link>
+  <joint name="base_link_${name}" type="continuous">
+    <origin xyz="${y*0.25} ${x*0.25} 0" rpy="0 0 0"/>
+     <axis rpy="0 0 0" xyz="0 1 0"/>
+    <parent link="base_link"/>
+    <child link="${name}"/>
+  </joint>
+
+<gazebo reference="base_link_${name}_wheel">
+  <mu1 value="200.0"/>
+  <mu2 value="100.0"/>
+  <kp value="10000000.0" />
+  <kd value="1.0" />
+  <material>Gazebo/Grey</material>
+</gazebo>
+<transmission name="base_link_${name}_wheel_trans">
+  <type>transmission_interface/SimpleTransmission</type>
+  <actuator name="base_link_${name}_wheel_motor">
+    <mechanicalReduction>1</mechanicalReduction>
+  </actuator>
+  <joint name="base_link_${name}">
+    <hardwareInterface>hardware_interface/VelocityJointInterface</hardwareInterface>
+  </joint>
+</transmission>
+</xacro:macro>
+
+
+
+<xacro:macro name="default_inertial" params="mass">
+  <inertial>
+    <mass value="${mass}" />
+    <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0" />
+  </inertial>
+</xacro:macro>
+
+
+
+<link name="base_link">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.6 0.4 0.10"/>
+      </geometry>
+      <material name="acrylic">
+        <color rgba="1 1 1 0.8"/>
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.6 0.4 0.10"/>
+      </geometry>
+    </collision>
+	<xacro:default_inertial mass="30"/>	
+</link>
+
+<xacro:wheel name="wh_left_back" x="1" y="-1"/>
+<xacro:wheel name="wh_right_back" x="-1" y="-1"/>
+<xacro:wheel name="wh_left_front" x="1" y="1"/>
+<xacro:wheel name="wh_right_front" x="-1" y="1"/>
+
+
+
+ <!-- =================== Kinect ==================== -->
+  <link name="kinect_link">
+    <visual>
+      <origin xyz="-0.1 -0.045 -0.1" rpy="1.5 0 0"/>
+      <geometry>
+        <mesh filename="package://mobile_robot_description/meshes/HC-SR04.stl" scale="0.005 0.005  0.005"/>
+      </geometry>
+      <material name="kinect">
+        <color rgba="1 0.9 0.9 1"/>
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.18 0.04 0.02"/>
+      </geometry>
+    </collision>
+    <xacro:default_inertial mass="0.2"/>
+  </link>
+
+  <joint name="base_link_kinect_link" type="fixed">
+    <origin xyz="0.265 0 0.087" rpy="0 0 ${pi/2}"/>
+    <parent link="base_link"/>
+    <child link="kinect_link"/>
+  </joint>
+
+<!-- ********************* ULTRASONIC SENSOR **********************  -->
+<link name="ultrasonic_1_link">
+
+
+
+  <xacro:default_inertial mass="0.2"/>
+  <pose>0.09 -0.139 0.595 0 0 0</pose>
+  <sensor name="ultrasonic_1" type="ray">
+    <always_on>true</always_on>
+    <visualize>false</visualize>
+    <update_rate>5</update_rate>
+    <ray>
+      <scan>
+        <horizontal>
+          <samples>5</samples>
+          <resolution>1.000000</resolution>
+          <min_angle>-0.12</min_angle>
+          <max_angle>0.12</max_angle>
+        </horizontal>
+        <vertical>
+          <samples>5</samples>
+          <resolution>1.000000</resolution>
+          <min_angle>-0.01</min_angle>
+          <max_angle>0.01</max_angle>
+        </vertical>
+      </scan>
+      <range>
+        <min>0.02</min>
+        <max>4</max>
+        <resolution>0.01</resolution>
+      </range>
+      <noise>
+        <type>gaussian</type>
+        <mean>0.0</mean>
+        <stddev>0.01</stddev>
+      </noise>
+    </ray>
+
+  </sensor>  
+</link>
+
+
+  <joint name="base_ultrasonic_1_link" type="fixed">
+    <origin xyz="0.265 0 0.087" rpy="0 0 ${pi/2}"/>
+    <parent link="kinect_link"/>
+    <child link="ultrasonic_1_link"/>
+  </joint>
+
+
+<gazebo>
+
+   <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">
+     <robotNamespace>/</robotNamespace>
+	<alwaysOn>true</alwaysOn>
+
+      <updateRate>10.0</updateRate>
+      
+      <frameName>gz_kinect_link</frameName>
+
+     
+
+      <pointCloudCutoff>0.4</pointCloudCutoff>
+      <hackBaseline>0.07</hackBaseline>
+      <distortionK1>0.001</distortionK1>
+      <distortionK2>0.001</distortionK2>
+      <distortionK3>0.001</distortionK3>
+      <distortionT1>0.001</distortionT1>
+      <distortionT2>0.001</distortionT2>
+      <CxPrime>0</CxPrime>
+      <Cx>0</Cx>
+      <Cy>0</Cy>
+      <focalLength>0</focalLength>
+   </plugin>
+
+      <plugin name="ultrasonic_sensor_1" filename="libgazebo_ros_ray_sensor.so">
+	      <ros>
+		<remapping>~/out:=ultrasonic_sensor_1</remapping>
+	      </ros>
+	      <output_type>sensor_msgs/Range</output_type>
+	      <radiation_type>ultrasound</radiation_type>
+	      <frame_name>ultrasonic_1_link</frame_name>
+      </plugin>
+
+ </gazebo>
+
+
+<plugin name="differential_drive_controller" filename="libgazebo_ros_diff_drive.so">
+  <alwaysOn>true</alwaysOn>
+  <updateRate>20</updateRate>
+  <leftJoint>base_link_wh_left_back</leftJoint>
+  <rightJoint>base_link_wh_right_back</rightJoint>
+  <wheelSeparation>0.5</wheelSeparation>
+  <wheelDiameter>0.1</wheelDiameter>
+  <torque>20</torque>
+ <commandTopic>/cmd_vel</commandTopic>
+ <odometryTopic>/mobile_robot/odom</odometryTopic>
+ <odometryFrame>odom</odometryFrame>
+ <robotBaseFrame>base_link</robotBaseFrame>
+</plugin>
+</robot>
